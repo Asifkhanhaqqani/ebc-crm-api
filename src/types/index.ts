@@ -2,7 +2,7 @@
 // columns arrive over the wire as strings — they are typed as `string` here
 // and parsed only at the display layer (see constraint #4 in the project spec).
 
-export type Rank = 'DC' | 'Sub-DC' | 'Capt' | 'Sub-CAPT' | 'LT' | 'Sub-LT' | 'OP' | 'FF';
+export type Rank = 'DC' | 'Sub-DC' | 'AC' | 'Capt' | 'Sub-CAPT' | 'LT' | 'Sub-LT' | 'OP' | 'FF';
 export type Platoon = 'A' | 'B' | 'C';
 export type EmployeeStatus = 'Active' | 'Inactive';
 
@@ -43,6 +43,7 @@ export interface Company {
   district: number | null;
   suffix_rule: string | null;
   records_only: boolean;
+  station_override: string | null;
   created_at: string;
   updated_at: string;
 }

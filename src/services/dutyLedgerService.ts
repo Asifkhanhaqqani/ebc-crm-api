@@ -20,7 +20,7 @@ export const dutyLedgerService = {
 
     const { data: employees, error: employeesError } = await supabaseAdmin
       .from('employees')
-      .select('id, company_code, station_override, platoon, companies!inner(station)')
+      .select('id, company_code, station_override, platoon, companies!inner(station, station_override)')
       .eq('status', 'Active')
       .eq('platoon', rotation.platoon);
     assertNoDbError(employeesError, 'generateForDate employees lookup');
@@ -30,7 +30,7 @@ export const dutyLedgerService = {
       platoon: rotation.platoon,
       employee_id: emp.id,
       company_code: emp.company_code,
-      station: emp.station_override ?? emp.companies?.station ?? '',
+      station: emp.station_override ?? emp.companies?.station_override ?? emp.companies?.station ?? '',
       duty_status: 'O' as const,
       shift_start: '07:00',
       shift_end: '07:00',
