@@ -18,6 +18,7 @@ import payrollRouter from './routes/payroll';
 import workforceRouter from './routes/workforce';
 import overtimeRouter from './routes/overtime';
 import shiftCloseRouter from './routes/shiftClose';
+import detRouter from './routes/det';
 import auditRouter from './routes/audit';
 import settingsRouter from './routes/settings';
 
@@ -60,6 +61,7 @@ app.use('/api/payroll', payrollRouter);
 app.use('/api/workforce', workforceRouter);
 app.use('/api/overtime', overtimeRouter);
 app.use('/api/shift-close', shiftCloseRouter);
+app.use('/api/det', detRouter);
 app.use('/api/audit', auditRouter);
 app.use('/api/settings', settingsRouter);
 

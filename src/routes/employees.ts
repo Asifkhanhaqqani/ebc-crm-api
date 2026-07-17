@@ -23,7 +23,7 @@ const createSchema = z.object({
   last_name: z.string().min(1),
   first_name: z.string().min(1),
   middle_initial: z.string().length(1).nullable().optional(),
-  rank: z.enum(['DC', 'Sub-DC', 'Capt', 'Sub-CAPT', 'LT', 'Sub-LT', 'OP', 'FF']),
+  rank: z.enum(['AC', 'Sub-AC', 'DC', 'Sub-DC', 'Capt', 'Sub-CAPT', 'LT', 'Sub-LT', 'OP', 'Sub-OP', 'FF', 'Sub-FF']),
   platoon: z.enum(['A', 'B', 'C']),
   company_code: z.string().min(1),
   station_override: z.string().nullable().optional(),

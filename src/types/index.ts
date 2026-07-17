@@ -2,12 +2,25 @@
 // columns arrive over the wire as strings — they are typed as `string` here
 // and parsed only at the display layer (see constraint #4 in the project spec).
 
-export type Rank = 'DC' | 'Sub-DC' | 'AC' | 'Capt' | 'Sub-CAPT' | 'LT' | 'Sub-LT' | 'OP' | 'FF';
+// A "Sub" rank works in the higher capacity for LONG periods; "Acting" (24h or
+// less) is never a rank — it stays as acting_note on payroll.
+export type Rank =
+  | 'AC' | 'Sub-AC' | 'DC' | 'Sub-DC' | 'Capt' | 'Sub-CAPT'
+  | 'LT' | 'Sub-LT' | 'OP' | 'Sub-OP' | 'FF' | 'Sub-FF';
+
+/** Canonical seniority order, most senior first. Use for any rank sorting. */
+export const RANK_SENIORITY: readonly Rank[] = [
+  'AC', 'Sub-AC', 'DC', 'Sub-DC', 'Capt', 'Sub-CAPT',
+  'LT', 'Sub-LT', 'OP', 'Sub-OP', 'FF', 'Sub-FF',
+];
+
 export type Platoon = 'A' | 'B' | 'C';
 export type EmployeeStatus = 'Active' | 'Inactive';
 
+// 'Train' is duty (not leave): the employee stays listed but is excluded from
+// staffing counts, and earns normal work credit on timesheet/payroll.
 export type DutyStatus =
-  | 'O' | 'AL' | 'SL' | 'EAL' | 'ISSL' | 'FODI' | 'ADM' | 'AWOL'
+  | 'O' | 'Train' | 'AL' | 'SL' | 'EAL' | 'ISSL' | 'FODI' | 'ADM' | 'AWOL'
   | 'FL' | 'CT' | 'CL' | 'DET' | 'MWA' | 'OWD';
 
 export type LeaveType =
@@ -97,6 +110,19 @@ export interface LeaveRecord {
   sl_dental: boolean;
   sl_optical: boolean;
   sl_death: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DetRecord {
+  id: string;
+  employee_id: string;
+  shift_date: string;
+  detail_location: string;
+  span_start: string;
+  span_end: string;
+  reason: string | null;
+  status: 'PendingApproval' | 'Approved' | 'Denied' | 'Cancelled';
   created_at: string;
   updated_at: string;
 }

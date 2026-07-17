@@ -5,11 +5,12 @@ import { emailService } from './emailService';
 import { rotationService } from './rotationService';
 
 const RANK_GROUPS: Record<string, Rank[]> = {
+  ac: ['AC', 'Sub-AC'],
   dc: ['DC', 'Sub-DC'],
   capt: ['Capt', 'Sub-CAPT'],
   lt: ['LT', 'Sub-LT'],
-  op: ['OP'],
-  ff: ['FF'],
+  op: ['OP', 'Sub-OP'],
+  ff: ['FF', 'Sub-FF'],
 };
 
 const LADDER_STAGES: Array<{ stage: 'T-24h' | 'T-12h' | 'T-1h' | 'T-15m'; label: string }> = [

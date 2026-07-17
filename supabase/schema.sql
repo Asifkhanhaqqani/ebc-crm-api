@@ -6,6 +6,7 @@
 
 create extension if not exists pgcrypto;
 create extension if not exists "uuid-ossp";
+create extension if not exists btree_gist; -- for the det_records overlap exclusion constraint
 
 -- ============================================================================
 -- 1. companies  (created before employees — employees.company_code references it)
@@ -30,7 +31,7 @@ create table if not exists employees (
   last_name        text not null,
   first_name       text not null,
   middle_initial   char(1),
-  rank             text not null check (rank in ('DC','Sub-DC','AC','Capt','Sub-CAPT','LT','Sub-LT','OP','FF')),
+  rank             text not null check (rank in ('AC','Sub-AC','DC','Sub-DC','Capt','Sub-CAPT','LT','Sub-LT','OP','Sub-OP','FF','Sub-FF')),
   platoon          char(1) not null check (platoon in ('A','B','C')),
   company_code     text not null references companies(code),
   station_override text,
@@ -70,7 +71,7 @@ create table if not exists duty_ledger (
   employee_id      uuid not null references employees(id),
   company_code     text not null references companies(code),
   station          text not null,
-  duty_status      text not null check (duty_status in ('O','AL','SL','EAL','ISSL','FODI','ADM','AWOL','FL','CT','CL','DET','MWA','OWD')),
+  duty_status      text not null check (duty_status in ('O','Train','AL','SL','EAL','ISSL','FODI','ADM','AWOL','FL','CT','CL','DET','MWA','OWD')),
   acting_note      text,
   shift_start      time not null default '07:00',
   shift_end        time not null default '07:00',
@@ -160,6 +161,25 @@ create table if not exists det_records (
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
 );
+
+-- An employee cannot be detailed to two places for overlapping times.
+-- Ranges are half-open [start, end), so sequential assignments that meet
+-- exactly (e.g. 07:00-14:00 then 14:00-07:00) are allowed. span_end <= span_start
+-- means the span crosses midnight into the next calendar day. Denied/Cancelled
+-- records don't block.
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'det_records_no_overlap') then
+    alter table det_records add constraint det_records_no_overlap
+      exclude using gist (
+        employee_id with =,
+        tsrange(
+          shift_date + span_start,
+          (shift_date + (case when span_end <= span_start then 1 else 0 end)) + span_end
+        ) with &&
+      ) where (status in ('PendingApproval','Approved'));
+  end if;
+end $$;
 
 -- ============================================================================
 -- 9. ot_availability

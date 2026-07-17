@@ -4,6 +4,7 @@ import { verifyJWT } from '../middleware/auth';
 import { asyncHandler } from '../utils/asyncHandler';
 import { assertNoDbError } from '../utils/db';
 import { ok } from '../utils/respond';
+import { isCountedForStaffing } from '../services/shiftMath';
 
 const router = Router();
 
@@ -33,7 +34,9 @@ router.get(
 
     const report = (companies ?? []).map((company) => {
       const rows = (dutyRows ?? []).filter((d) => d.company_code === company.code);
-      const onDutyCount = rows.filter((d) => d.duty_status === 'O').length;
+      // Train (and every leave/detail status) stays listed in `roster` but is
+      // excluded from the on-duty count, so a station can go short over Train.
+      const onDutyCount = rows.filter((d) => isCountedForStaffing(d.duty_status)).length;
       const required = requiredSeats(company.suffix_rule);
       const shortage = Math.max(0, required - onDutyCount);
 

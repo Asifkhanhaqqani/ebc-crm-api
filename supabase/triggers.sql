@@ -154,7 +154,60 @@ create trigger trg_prevent_audit_log_delete
   for each row execute function prevent_audit_log_mutation();
 
 -- ----------------------------------------------------------------------------
--- 5. refresh_ot_tier_board() — callable via supabaseAdmin.rpc() from the
+-- 5. block_det_during_leave() — BEFORE INSERT OR UPDATE on det_records.
+--    An employee on approved leave for a time range cannot be entered on
+--    duty/DET for that same range; the leave must be amended in its original
+--    record first. (Overlap between two DET entries is enforced separately by
+--    the det_records_no_overlap exclusion constraint in schema.sql.)
+-- ----------------------------------------------------------------------------
+create or replace function block_det_during_leave()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_leave leave_records;
+  v_det_range tsrange;
+  v_leave_range tsrange;
+begin
+  if new.status not in ('PendingApproval', 'Approved') then
+    return new;
+  end if;
+
+  v_det_range := tsrange(
+    new.shift_date + new.span_start,
+    (new.shift_date + (case when new.span_end <= new.span_start then 1 else 0 end)) + new.span_end
+  );
+
+  for v_leave in
+    select * from leave_records lr
+    where lr.employee_id = new.employee_id
+      and lr.status in ('Granted', 'Active')
+      and lr.shift_date between new.shift_date - 1 and new.shift_date + 1
+  loop
+    v_leave_range := tsrange(
+      v_leave.shift_date + v_leave.span_start,
+      (v_leave.shift_date + (case when v_leave.span_end <= v_leave.span_start then 1 else 0 end)) + v_leave.span_end
+    );
+
+    if v_det_range && v_leave_range then
+      raise exception 'LEAVE_CONFLICT: employee has approved % leave %–% on % — amend the leave record before assigning duty',
+        v_leave.leave_type, v_leave.span_start, v_leave.span_end, v_leave.shift_date;
+    end if;
+  end loop;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_block_det_during_leave on det_records;
+create trigger trg_block_det_during_leave
+  before insert or update on det_records
+  for each row execute function block_det_during_leave();
+
+-- ----------------------------------------------------------------------------
+-- 6. refresh_ot_tier_board() — callable via supabaseAdmin.rpc() from the
 --    backend's otTierService before reading the materialized view.
 -- ----------------------------------------------------------------------------
 create or replace function refresh_ot_tier_board()

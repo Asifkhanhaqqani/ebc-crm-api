@@ -1,23 +1,17 @@
 import { supabaseAdmin } from '../config';
 import { assertNoDbError } from '../utils/db';
+import { clampedSpanHours } from './shiftMath';
 import { PayrollRow } from '../types';
 
 const FULL_SHIFT_HOURS = 24;
 
-function toMinutes(hhmm: string): number {
-  const [h, m] = hhmm.split(':').map(Number);
-  return h * 60 + m;
-}
-
-/** Handles a span that crosses the 07:00 shift boundary (end <= start means overnight). */
+/**
+ * Leave hours inside this shift's 24-hour window only. Hours past the 07:00
+ * boundary belong to the next shift date's records (and possibly the next pay
+ * period) — they must never reduce this period's hours.
+ */
 function spanHours(startStr: string, endStr: string): number {
-  const start = toMinutes(startStr);
-  let end = toMinutes(endStr);
-  if (end <= start) {
-    // e.g. span_start=19:00, span_end=07:00 → (24 - hours(start)) + hours(end)
-    end += 24 * 60;
-  }
-  return Math.round(((end - start) / 60) * 100) / 100;
+  return clampedSpanHours({ span_start: startStr, span_end: endStr });
 }
 
 /** Parses acting notes like 'ACT-Capt 1900→0700' into { role, start, end } or null. */

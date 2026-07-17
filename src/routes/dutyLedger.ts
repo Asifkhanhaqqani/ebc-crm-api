@@ -14,7 +14,7 @@ const generateSchema = z.object({ date: z.string() });
 const updateSchema = z.object({
   acting_note: z.string().nullable().optional(),
   duty_status: z
-    .enum(['O', 'AL', 'SL', 'EAL', 'ISSL', 'FODI', 'ADM', 'AWOL', 'FL', 'CT', 'CL', 'DET', 'MWA', 'OWD'])
+    .enum(['O', 'Train', 'AL', 'SL', 'EAL', 'ISSL', 'FODI', 'ADM', 'AWOL', 'FL', 'CT', 'CL', 'DET', 'MWA', 'OWD'])
     .optional(),
 });
 
