@@ -1,11 +1,17 @@
 import { supabaseAdmin } from '../config';
 import { logger } from '../logger';
 
-const ANCHOR = '2026-07-16'; // Platoon A (confirmed)
+// Source of truth: data/Jefferson_Parish_Fire_Corrected_Master_Schedule_1990-2075.md
+// Each platoon runs a 15-day repeating cycle, on duty on cycle days 1,3,5,7,9,
+// off on cycle days 10-15. Anchors are each platoon's cycle-day-1 date.
+const ANCHOR_A = '2025-01-03';
+const ANCHOR_B = '2025-01-08';
+const ANCHOR_C = '2025-01-13';
+const DUTY_DAYS = [1, 3, 5, 7, 9];
+const CYCLE_LENGTH = 15;
+
 const START_DATE = '2026-01-01';
 const END_DATE = '2026-12-30';
-
-const PLATOON_BY_CYCLE_POS: Record<number, string> = { 0: 'A', 1: 'B', 2: 'C' };
 
 function daysBetween(a: string, b: string): number {
   const msPerDay = 24 * 60 * 60 * 1000;
@@ -20,11 +26,17 @@ function addDaysIso(dateStr: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-/** Expected platoon for a date given the anchor: 2026-07-16 = A, cycling A->B->C. */
+function dayInCycle(dateStr: string, anchor: string): number {
+  const diff = daysBetween(anchor, dateStr);
+  return (((diff % CYCLE_LENGTH) + CYCLE_LENGTH) % CYCLE_LENGTH) + 1;
+}
+
+/** Expected platoon for a date under the 15-day cycle (A/B/C anchors 5 days apart). */
 function expectedPlatoon(dateStr: string): string {
-  const diff = daysBetween(ANCHOR, dateStr);
-  const cyclePos = ((diff % 3) + 3) % 3;
-  return PLATOON_BY_CYCLE_POS[cyclePos];
+  if (DUTY_DAYS.includes(dayInCycle(dateStr, ANCHOR_A))) return 'A';
+  if (DUTY_DAYS.includes(dayInCycle(dateStr, ANCHOR_B))) return 'B';
+  if (DUTY_DAYS.includes(dayInCycle(dateStr, ANCHOR_C))) return 'C';
+  throw new Error(`no platoon on duty for ${dateStr}`);
 }
 
 async function main() {

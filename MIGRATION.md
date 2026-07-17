@@ -120,9 +120,12 @@ No step may be skipped.
 ## Section 4 — Rotation verification script
 
 `scripts/verifyRotation.ts` checks every date from 2026-01-01 through
-2026-12-30 against the known-correct platoon cycle (anchor: 2026-07-16 =
-Platoon A, cycling A→B→C→A→B→C… one platoon change per shift) and prints
-`PASS`/`FAIL` per date. It exits with code 1 if any date fails.
+2026-12-30 against the official 15-day platoon cycle documented in
+`data/Jefferson_Parish_Fire_Corrected_Master_Schedule_1990-2075.md`: each
+platoon is on duty on cycle days 1, 3, 5, 7, 9 (five 24-hour shifts) and off
+on cycle days 10-15, with anchors `2025-01-03` (A), `2025-01-08` (B), and
+`2025-01-13` (C). Prints `PASS`/`FAIL` per date and exits with code 1 if any
+date fails.
 
 ```bash
 npm run build

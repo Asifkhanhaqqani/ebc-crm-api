@@ -1,4 +1,13 @@
 -- ============================================================================
+-- SUPERSEDED — do not run this file.
+--
+-- This migration used a simple 3-day A/B/C cycle, which only happened to be
+-- correct for 2026-07-16 itself. The real Jefferson Parish FD schedule is a
+-- 15-day cycle (5 duty days, 6 off), confirmed against
+-- data/Jefferson_Parish_Fire_Corrected_Master_Schedule_1990-2075.md.
+-- Use 2026-07-17_fix_rotation_15day_cycle.sql instead.
+-- ============================================================================
+-- ============================================================================
 -- Fix rotation_schedule platoon assignments.
 --
 -- The seed formula anchored on 2026-01-01 = Platoon B (cycling B->C->A) put

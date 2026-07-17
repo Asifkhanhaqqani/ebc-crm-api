@@ -10,7 +10,7 @@ create extension if not exists "uuid-ossp";
 -- ============================================================================
 -- 1. companies  (created before employees — employees.company_code references it)
 -- ============================================================================
-create table companies (
+create table if not exists companies (
   code             text primary key,
   station          text not null,
   district         integer,
@@ -24,7 +24,7 @@ create table companies (
 -- ============================================================================
 -- 2. employees
 -- ============================================================================
-create table employees (
+create table if not exists employees (
   id               uuid primary key default gen_random_uuid(),
   emp_number       integer unique not null,
   last_name        text not null,
@@ -42,14 +42,14 @@ create table employees (
   updated_at       timestamptz not null default now()
 );
 
-create index idx_employees_platoon on employees (platoon);
-create index idx_employees_company_code on employees (company_code);
-create index idx_employees_status on employees (status);
+create index if not exists idx_employees_platoon on employees (platoon);
+create index if not exists idx_employees_company_code on employees (company_code);
+create index if not exists idx_employees_status on employees (status);
 
 -- ============================================================================
 -- 3. rotation_schedule
 -- ============================================================================
-create table rotation_schedule (
+create table if not exists rotation_schedule (
   id               uuid primary key default gen_random_uuid(),
   shift_date       date unique not null,
   platoon          char(1) not null check (platoon in ('A','B','C')),
@@ -58,12 +58,12 @@ create table rotation_schedule (
   created_at       timestamptz not null default now()
 );
 
-create index idx_rotation_schedule_pp_end on rotation_schedule (pp_end);
+create index if not exists idx_rotation_schedule_pp_end on rotation_schedule (pp_end);
 
 -- ============================================================================
 -- 4. duty_ledger
 -- ============================================================================
-create table duty_ledger (
+create table if not exists duty_ledger (
   id               uuid primary key default gen_random_uuid(),
   shift_date       date not null,
   platoon          char(1) not null,
@@ -82,13 +82,13 @@ create table duty_ledger (
   unique (shift_date, employee_id)
 );
 
-create index idx_duty_ledger_open on duty_ledger (shift_date) where is_closed = false;
-create index idx_duty_ledger_employee on duty_ledger (employee_id);
+create index if not exists idx_duty_ledger_open on duty_ledger (shift_date) where is_closed = false;
+create index if not exists idx_duty_ledger_employee on duty_ledger (employee_id);
 
 -- ============================================================================
 -- 5. leave_records
 -- ============================================================================
-create table leave_records (
+create table if not exists leave_records (
   id               uuid primary key default gen_random_uuid(),
   entry_id         text unique not null,
   employee_id      uuid not null references employees(id),
@@ -113,13 +113,13 @@ create table leave_records (
   updated_at       timestamptz not null default now()
 );
 
-create index idx_leave_records_employee on leave_records (employee_id);
-create index idx_leave_records_shift_date on leave_records (shift_date);
+create index if not exists idx_leave_records_employee on leave_records (employee_id);
+create index if not exists idx_leave_records_shift_date on leave_records (shift_date);
 
 -- ============================================================================
 -- 6. al_slot_ledger
 -- ============================================================================
-create table al_slot_ledger (
+create table if not exists al_slot_ledger (
   id               uuid primary key default gen_random_uuid(),
   platoon          char(1) not null,
   shift_date       date not null,
@@ -132,7 +132,7 @@ create table al_slot_ledger (
 -- ============================================================================
 -- 7. mwa_records  (Mutual/Working Aid records)
 -- ============================================================================
-create table mwa_records (
+create table if not exists mwa_records (
   id               uuid primary key default gen_random_uuid(),
   employee_id      uuid not null references employees(id),
   shift_date       date not null,
@@ -148,7 +148,7 @@ create table mwa_records (
 -- ============================================================================
 -- 8. det_records  (Detail records)
 -- ============================================================================
-create table det_records (
+create table if not exists det_records (
   id               uuid primary key default gen_random_uuid(),
   employee_id      uuid not null references employees(id),
   shift_date       date not null,
@@ -164,7 +164,7 @@ create table det_records (
 -- ============================================================================
 -- 9. ot_availability
 -- ============================================================================
-create table ot_availability (
+create table if not exists ot_availability (
   id                uuid primary key default gen_random_uuid(),
   employee_id       uuid not null references employees(id),
   available_from    date not null,
@@ -176,12 +176,12 @@ create table ot_availability (
   updated_at        timestamptz not null default now()
 );
 
-create index idx_ot_availability_employee on ot_availability (employee_id);
+create index if not exists idx_ot_availability_employee on ot_availability (employee_id);
 
 -- ============================================================================
 -- 10. ot_requests
 -- ============================================================================
-create table ot_requests (
+create table if not exists ot_requests (
   id               uuid primary key default gen_random_uuid(),
   shift_date       date not null,
   company_code     text references companies(code),
@@ -193,12 +193,12 @@ create table ot_requests (
   updated_at       timestamptz not null default now()
 );
 
-create index idx_ot_requests_shift_date on ot_requests (shift_date);
+create index if not exists idx_ot_requests_shift_date on ot_requests (shift_date);
 
 -- ============================================================================
 -- 11. payroll_rows
 -- ============================================================================
-create table payroll_rows (
+create table if not exists payroll_rows (
   id                uuid primary key default gen_random_uuid(),
   shift_date        date not null,
   employee_id       uuid not null references employees(id),
@@ -218,12 +218,12 @@ create table payroll_rows (
   unique (shift_date, employee_id, leave_type)
 );
 
-create index idx_payroll_rows_date_district on payroll_rows (shift_date, district);
+create index if not exists idx_payroll_rows_date_district on payroll_rows (shift_date, district);
 
 -- ============================================================================
 -- 12. timesheet_segments
 -- ============================================================================
-create table timesheet_segments (
+create table if not exists timesheet_segments (
   id               uuid primary key default gen_random_uuid(),
   employee_id      uuid not null references employees(id),
   pp_end           date not null,
@@ -242,12 +242,12 @@ create table timesheet_segments (
   created_at       timestamptz not null default now()
 );
 
-create index idx_timesheet_segments_employee_pp on timesheet_segments (employee_id, pp_end);
+create index if not exists idx_timesheet_segments_employee_pp on timesheet_segments (employee_id, pp_end);
 
 -- ============================================================================
 -- 13. shift_close
 -- ============================================================================
-create table shift_close (
+create table if not exists shift_close (
   id                uuid primary key default gen_random_uuid(),
   shift_date        date not null,
   station            text not null,
@@ -264,7 +264,7 @@ create table shift_close (
 -- ============================================================================
 -- 14. audit_log  (immutable — enforced by trigger in triggers.sql)
 -- ============================================================================
-create table audit_log (
+create table if not exists audit_log (
   id               uuid primary key default gen_random_uuid(),
   occurred_at      timestamptz not null default now(),
   actor_type       text not null check (actor_type in ('member','supervisor','admin','system')),
@@ -274,12 +274,12 @@ create table audit_log (
   detail           text
 );
 
-create index idx_audit_log_occurred_at on audit_log (occurred_at desc);
+create index if not exists idx_audit_log_occurred_at on audit_log (occurred_at desc);
 
 -- ============================================================================
 -- 15. notifications_outbox
 -- ============================================================================
-create table notifications_outbox (
+create table if not exists notifications_outbox (
   id               uuid primary key default gen_random_uuid(),
   trigger_event    text not null,
   entry_id         text,
@@ -293,12 +293,12 @@ create table notifications_outbox (
   created_at       timestamptz not null default now()
 );
 
-create index idx_notifications_outbox_unsent on notifications_outbox (queued_at) where sent_at is null;
+create index if not exists idx_notifications_outbox_unsent on notifications_outbox (queued_at) where sent_at is null;
 
 -- ============================================================================
 -- 16. roles
 -- ============================================================================
-create table roles (
+create table if not exists roles (
   id               uuid primary key default gen_random_uuid(),
   employee_id      uuid not null references employees(id),
   role             text not null check (role in ('admin','supervisor','member')),
@@ -310,7 +310,7 @@ create table roles (
 -- ============================================================================
 -- 17. settings
 -- ============================================================================
-create table settings (
+create table if not exists settings (
   key              text primary key,
   value            text not null,
   description      text,
@@ -321,16 +321,16 @@ create table settings (
 -- ============================================================================
 -- Partial indexes required by spec
 -- ============================================================================
-create index idx_leave_records_open on leave_records (shift_date, employee_id)
+create index if not exists idx_leave_records_open on leave_records (shift_date, employee_id)
   where status in ('Granted','Active','Waitlist');
-create index idx_duty_ledger_not_closed on duty_ledger (shift_date) where is_closed = false;
-create index idx_payroll_rows_shift_district on payroll_rows (shift_date, district);
-create index idx_audit_log_recent on audit_log (occurred_at desc);
+create index if not exists idx_duty_ledger_not_closed on duty_ledger (shift_date) where is_closed = false;
+create index if not exists idx_payroll_rows_shift_district on payroll_rows (shift_date, district);
+create index if not exists idx_audit_log_recent on audit_log (occurred_at desc);
 
 -- ============================================================================
 -- 18. ot_tier_board  (materialized view)
 -- ============================================================================
-create materialized view ot_tier_board as
+create materialized view if not exists ot_tier_board as
   select
     e.id as employee_id,
     e.last_name || ', ' || e.first_name as full_name,
@@ -347,7 +347,7 @@ create materialized view ot_tier_board as
   group by e.id, e.rank, e.platoon
   order by days_since_ot desc;
 
-create unique index on ot_tier_board (employee_id);
+create unique index if not exists ot_tier_board_employee_id_idx on ot_tier_board (employee_id);
 
 -- ============================================================================
 -- Seed data
@@ -376,7 +376,8 @@ insert into companies (code, station, district, suffix_rule, records_only, stati
   ('L177', 'Station 17', 160, '4 · LT+OP+2FF', false, null),
   ('E208', 'Station 20', 160, '5 · Capt+LT+OP+2FF', false, null),
   ('C160', 'District 160 HQ', 160, '1 · DC', true, null),
-  ('C102', 'HQ', null, '1 · AC', true, null);
+  ('C102', 'HQ', null, '1 · AC', true, null)
+on conflict (code) do nothing;
 
 -- Employees (real EBC/JPFD roster, A/B/C platoons, seeded 2026-07-16)
 -- emp_number values are provisional sequential placeholders (3001+) pending real
@@ -607,34 +608,57 @@ insert into employees (emp_number, last_name, first_name, middle_initial, rank, 
   (3222, 'Vaccaro', 'S', null, 'LT', 'B', 'E208', true, 'Active'),
   (3223, 'Lama', 'A', null, 'OP', 'B', 'E208', false, 'Active'),
   (3224, 'White', 'C', null, 'FF', 'B', 'E208', false, 'Active'),
-  (3225, 'Cardinale', 'J', null, 'AC', 'B', 'C102', true, 'Active');
+  (3225, 'Cardinale', 'J', null, 'AC', 'B', 'C102', true, 'Active')
+on conflict (emp_number) do nothing;
 
 -- Rotation schedule 2026-07-01 through 2026-12-31
--- Anchor: 2026-07-16 = Platoon A (confirmed). Cycle repeats A,B,C every shift (1 day per shift).
--- Pay periods are 14-day blocks anchored to 2026-01-01 (pp_start) with pp_end = pp_start+13.
+-- Source of truth: data/Jefferson_Parish_Fire_Corrected_Master_Schedule_1990-2075.md
+-- Each platoon runs a 15-day repeating cycle, on duty on cycle days 1,3,5,7,9
+-- (5 shifts), off on cycle days 10-15 (6 days). Anchors are each platoon's
+-- cycle-day-1 date, spaced 5 days apart so exactly one platoon is on duty
+-- any given day. Verified against all 31,411 rows of the master file with
+-- zero mismatches.
+-- Pay periods are 14-day blocks anchored to the confirmed Saturday
+-- 2026-05-30 07:00 pay-period start.
 do $$
 declare
-  d date := '2026-07-01';
-  anchor date := '2026-07-16';
-  cycle_pos integer;
-  plt char(1);
-  pp_anchor date := '2026-01-01';
-  days_since_pp_anchor integer;
-  pp_start_d date;
-  pp_end_d date;
+  d              date    := '2026-07-01';
+  end_date       date    := '2026-12-31';
+  anchor_a       date    := '2025-01-03';
+  anchor_b       date    := '2025-01-08';
+  anchor_c       date    := '2025-01-13';
+  pp_anchor      date    := '2026-05-30';
+  duty_days      integer[] := array[1,3,5,7,9];
+  day_in_cycle_a integer;
+  day_in_cycle_b integer;
+  day_in_cycle_c integer;
+  plt            char(1);
+  days_since_pp  integer;
+  pp_start_d     date;
+  pp_end_d       date;
 begin
-  while d <= '2026-12-31' loop
-    -- platoon cycle: (days since anchor) mod 3 -> 0=A,1=B,2=C  (anchor date itself = A)
-    cycle_pos := ((d - anchor) % 3 + 3) % 3;
-    plt := case cycle_pos when 0 then 'A' when 1 then 'B' else 'C' end;
+  while d <= end_date loop
+    day_in_cycle_a := ((d - anchor_a) % 15 + 15) % 15 + 1;
+    day_in_cycle_b := ((d - anchor_b) % 15 + 15) % 15 + 1;
+    day_in_cycle_c := ((d - anchor_c) % 15 + 15) % 15 + 1;
 
-    days_since_pp_anchor := d - pp_anchor;
-    pp_start_d := pp_anchor + (floor(days_since_pp_anchor / 14.0)::integer * 14);
-    pp_end_d := pp_start_d + 13;
+    if day_in_cycle_a = any(duty_days) then plt := 'A';
+    elsif day_in_cycle_b = any(duty_days) then plt := 'B';
+    elsif day_in_cycle_c = any(duty_days) then plt := 'C';
+    else
+      raise exception 'no platoon on duty for %', d;
+    end if;
+
+    days_since_pp := d - pp_anchor;
+    pp_start_d    := pp_anchor + (floor(days_since_pp::numeric / 14) * 14)::integer;
+    pp_end_d      := pp_start_d + 13;
 
     insert into rotation_schedule (shift_date, platoon, pp_start, pp_end)
     values (d, plt, pp_start_d, pp_end_d)
-    on conflict (shift_date) do nothing;
+    on conflict (shift_date) do update
+      set platoon  = excluded.platoon,
+          pp_start = excluded.pp_start,
+          pp_end   = excluded.pp_end;
 
     d := d + 1;
   end loop;
@@ -646,79 +670,98 @@ end $$;
 -- clock times were provided for those partial-day entries.
 insert into leave_records (entry_id, employee_id, leave_type, shift_date, span_start, span_end, reason, status, submitted_at)
 select 'LV20260716-001', id, 'ISSL', '2026-07-16', '07:00', '19:00', null, 'Active', now()
-from employees where emp_number = 3022;
+from employees where emp_number = 3022
+on conflict (entry_id) do nothing;
 
 insert into leave_records (entry_id, employee_id, leave_type, shift_date, span_start, span_end, reason, status, submitted_at)
 select 'LV20260716-002', id, 'AL', '2026-07-16', '07:00', '19:00', 'AL - 13 hrs', 'Active', now()
-from employees where emp_number = 3153;
+from employees where emp_number = 3153
+on conflict (entry_id) do nothing;
 
 insert into leave_records (entry_id, employee_id, leave_type, shift_date, span_start, span_end, reason, status, submitted_at)
 select 'LV20260716-003', id, 'AL', '2026-07-16', '07:00', '19:00', null, 'Active', now()
-from employees where emp_number = 3159;
+from employees where emp_number = 3159
+on conflict (entry_id) do nothing;
 
 insert into leave_records (entry_id, employee_id, leave_type, shift_date, span_start, span_end, reason, status, submitted_at)
 select 'LV20260716-004', id, 'SL', '2026-07-16', '07:00', '19:00', null, 'Active', now()
-from employees where emp_number = 3161;
+from employees where emp_number = 3161
+on conflict (entry_id) do nothing;
 
 insert into leave_records (entry_id, employee_id, leave_type, shift_date, span_start, span_end, reason, status, submitted_at)
 select 'LV20260716-005', id, 'AL', '2026-07-16', '07:00', '19:00', null, 'Active', now()
-from employees where emp_number = 3162;
+from employees where emp_number = 3162
+on conflict (entry_id) do nothing;
 
 insert into leave_records (entry_id, employee_id, leave_type, shift_date, span_start, span_end, reason, status, submitted_at)
 select 'LV20260716-006', id, 'AL', '2026-07-16', '07:00', '19:00', 'AL - 9 hrs', 'Active', now()
-from employees where emp_number = 3163;
+from employees where emp_number = 3163
+on conflict (entry_id) do nothing;
 
 insert into leave_records (entry_id, employee_id, leave_type, shift_date, span_start, span_end, reason, status, submitted_at)
 select 'LV20260716-007', id, 'SL', '2026-07-16', '07:00', '19:00', 'SL - 5 hrs', 'Active', now()
-from employees where emp_number = 3166;
+from employees where emp_number = 3166
+on conflict (entry_id) do nothing;
 
 insert into leave_records (entry_id, employee_id, leave_type, shift_date, span_start, span_end, reason, status, submitted_at)
 select 'LV20260716-008', id, 'AL', '2026-07-16', '07:00', '19:00', 'AL - 2 hrs', 'Active', now()
-from employees where emp_number = 3168;
+from employees where emp_number = 3168
+on conflict (entry_id) do nothing;
 
 insert into leave_records (entry_id, employee_id, leave_type, shift_date, span_start, span_end, reason, status, submitted_at)
 select 'LV20260716-009', id, 'AL', '2026-07-16', '07:00', '19:00', null, 'Active', now()
-from employees where emp_number = 3169;
+from employees where emp_number = 3169
+on conflict (entry_id) do nothing;
 
 insert into leave_records (entry_id, employee_id, leave_type, shift_date, span_start, span_end, reason, status, submitted_at)
 select 'LV20260716-010', id, 'FODI', '2026-07-16', '07:00', '19:00', null, 'Active', now()
-from employees where emp_number = 3170;
+from employees where emp_number = 3170
+on conflict (entry_id) do nothing;
 
 insert into leave_records (entry_id, employee_id, leave_type, shift_date, span_start, span_end, reason, status, submitted_at)
 select 'LV20260716-011', id, 'SL', '2026-07-16', '07:00', '19:00', null, 'Active', now()
-from employees where emp_number = 3183;
+from employees where emp_number = 3183
+on conflict (entry_id) do nothing;
 
 insert into leave_records (entry_id, employee_id, leave_type, shift_date, span_start, span_end, reason, status, submitted_at)
 select 'LV20260716-012', id, 'AL', '2026-07-16', '07:00', '19:00', null, 'Active', now()
-from employees where emp_number = 3203;
+from employees where emp_number = 3203
+on conflict (entry_id) do nothing;
 
 insert into leave_records (entry_id, employee_id, leave_type, shift_date, span_start, span_end, reason, status, submitted_at)
 select 'LV20260716-013', id, 'CT', '2026-07-16', '07:00', '19:00', 'CT - 17 hrs', 'Active', now()
-from employees where emp_number = 3209;
+from employees where emp_number = 3209
+on conflict (entry_id) do nothing;
 
 insert into leave_records (entry_id, employee_id, leave_type, shift_date, span_start, span_end, reason, status, submitted_at)
 select 'LV20260716-014', id, 'SL', '2026-07-16', '07:00', '19:00', null, 'Active', now()
-from employees where emp_number = 3212;
+from employees where emp_number = 3212
+on conflict (entry_id) do nothing;
 
 insert into leave_records (entry_id, employee_id, leave_type, shift_date, span_start, span_end, reason, status, submitted_at)
 select 'LV20260716-015', id, 'ISSL', '2026-07-16', '07:00', '19:00', null, 'Active', now()
-from employees where emp_number = 3216;
+from employees where emp_number = 3216
+on conflict (entry_id) do nothing;
 
 insert into leave_records (entry_id, employee_id, leave_type, shift_date, span_start, span_end, reason, status, submitted_at)
 select 'LV20260716-016', id, 'ISSL', '2026-07-16', '07:00', '19:00', null, 'Active', now()
-from employees where emp_number = 3218;
+from employees where emp_number = 3218
+on conflict (entry_id) do nothing;
 
 insert into leave_records (entry_id, employee_id, leave_type, shift_date, span_start, span_end, reason, status, submitted_at)
 select 'LV20260716-017', id, 'SL', '2026-07-16', '07:00', '19:00', null, 'Active', now()
-from employees where emp_number = 3219;
+from employees where emp_number = 3219
+on conflict (entry_id) do nothing;
 
 insert into leave_records (entry_id, employee_id, leave_type, shift_date, span_start, span_end, reason, status, submitted_at)
 select 'LV20260716-018', id, 'ISSL', '2026-07-16', '07:00', '19:00', null, 'Active', now()
-from employees where emp_number = 3220;
+from employees where emp_number = 3220
+on conflict (entry_id) do nothing;
 
 insert into leave_records (entry_id, employee_id, leave_type, shift_date, span_start, span_end, reason, status, submitted_at)
 select 'LV20260716-019', id, 'AL', '2026-07-16', '07:00', '19:00', null, 'Active', now()
-from employees where emp_number = 3222;
+from employees where emp_number = 3222
+on conflict (entry_id) do nothing;
 -- Settings
 insert into settings (key, value, description) values
   ('max_al_slots_per_shift', '12',        'Maximum concurrent AL slots allowed per platoon per shift'),
@@ -726,4 +769,5 @@ insert into settings (key, value, description) values
   ('timezone',               'America/Chicago', 'Application timezone for all shift date logic'),
   ('packet_email_time',      '08:15',     'Local time the shift-packet cron job runs'),
   ('admin_email',            'admin@ebc-fire.org', 'Fallback recipient for admin notifications'),
-  ('ladder_117_temp_station', 'Station 14', 'Ladder 117 is temporarily housed at Station 14 while Station 11 undergoes renovation (normal home = Station 11, companies.station_override). Expected to last up to 2 years from 2026-07-16.');
+  ('ladder_117_temp_station', 'Station 14', 'Ladder 117 is temporarily housed at Station 14 while Station 11 undergoes renovation (normal home = Station 11, companies.station_override). Expected to last up to 2 years from 2026-07-16.')
+on conflict (key) do nothing;
