@@ -24,3 +24,20 @@ export const strictRateLimiter = rateLimit({
   legacyHeaders: false,
   handler: jsonHandler,
 });
+
+// Deliberately more lenient than strictRateLimiter — the one-time admin
+// bootstrap flow can legitimately take a few tries (typo'd email, employee
+// record not linked yet, etc.) without anyone being malicious about it.
+export const setupRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: {
+      code: 'RATE_LIMITED',
+      message: 'Too many setup attempts. Please wait 15 minutes.',
+    },
+  },
+});

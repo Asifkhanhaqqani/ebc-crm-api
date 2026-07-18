@@ -38,7 +38,15 @@ app.use(helmet());
 app.use(cors({ origin: config.FRONTEND_URL }));
 app.use(express.json());
 app.use(requestLogger);
-app.use('/api', apiRateLimiter);
+
+// /api/admin/setup-first-admin (and its bootstrap sibling) carry their own,
+// more lenient limiter (see routes/admin.ts) — skip the general one for
+// those two paths specifically rather than double-limiting them.
+const SETUP_PATHS = new Set(['/admin/setup-first-admin', '/admin/bootstrap-first-employee']);
+app.use('/api', (req, res, next) => {
+  if (SETUP_PATHS.has(req.path)) return next();
+  return apiRateLimiter(req, res, next);
+});
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, ts: new Date().toISOString() });
