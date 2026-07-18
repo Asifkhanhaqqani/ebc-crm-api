@@ -268,6 +268,8 @@ export interface PaginationMeta {
   total: number;
   page: number;
   limit: number;
+  /** Optional explanatory note for an otherwise-empty success response (e.g. no rotation data for a period). */
+  message?: string;
 }
 
 export interface ApiSuccess<T> {
