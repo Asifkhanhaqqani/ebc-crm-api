@@ -21,6 +21,8 @@ import shiftCloseRouter from './routes/shiftClose';
 import detRouter from './routes/det';
 import auditRouter from './routes/audit';
 import settingsRouter from './routes/settings';
+import companiesRouter from './routes/companies';
+import authRouter from './routes/auth';
 
 const app = express();
 
@@ -70,6 +72,8 @@ app.use('/api/shift-close', shiftCloseRouter);
 app.use('/api/det', detRouter);
 app.use('/api/audit', auditRouter);
 app.use('/api/settings', settingsRouter);
+app.use('/api/companies', companiesRouter);
+app.use('/api/auth', authRouter);
 
 app.use(errorHandler);
 
