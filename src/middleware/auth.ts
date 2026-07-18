@@ -48,6 +48,7 @@ export async function verifyJWT(req: Request, res: Response, next: NextFunction)
 
     req.user = {
       userId: data.user.id,
+      email: data.user.email ?? null,
       employeeId: employee?.id ?? null,
       roles,
     };
@@ -65,6 +66,19 @@ export function requireRole(role: AppRole) {
       const body: ApiError = {
         success: false,
         error: { code: 'FORBIDDEN', message: `Requires role: ${role}` },
+      };
+      return res.status(403).json(body);
+    }
+    return next();
+  };
+}
+
+export function requireAnyRole(...roles: AppRole[]) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!roles.some((role) => req.user?.roles.includes(role))) {
+      const body: ApiError = {
+        success: false,
+        error: { code: 'FORBIDDEN', message: `Requires one of role: ${roles.join(', ')}` },
       };
       return res.status(403).json(body);
     }

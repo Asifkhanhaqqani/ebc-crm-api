@@ -292,6 +292,7 @@ export type ApiResponse<T> = ApiSuccess<T> | ApiError;
 
 export interface AuthedUser {
   userId: string;
+  email: string | null;
   employeeId: string | null;
   roles: AppRole[];
 }

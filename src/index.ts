@@ -7,6 +7,7 @@ import { requestLogger } from './middleware/requestLogger';
 import { apiRateLimiter } from './middleware/rateLimiter';
 import { errorHandler, HttpError } from './middleware/errorHandler';
 import { verifyCronSecret, runShiftPacketEmailJob } from './jobs/shiftPacketEmail';
+import { runGenerateDutyLedgerJob } from './jobs/generateDutyLedger';
 
 import employeesRouter from './routes/employees';
 import rotationRouter from './routes/rotation';
@@ -23,6 +24,7 @@ import auditRouter from './routes/audit';
 import settingsRouter from './routes/settings';
 import companiesRouter from './routes/companies';
 import authRouter from './routes/auth';
+import adminRouter from './routes/admin';
 
 const app = express();
 
@@ -55,6 +57,20 @@ app.post('/api/jobs/shift-packet-email', async (req, res, next) => {
   }
 });
 
+// Same cron-secret pattern, scheduled for shift_start_time — no-ops unless
+// Settings > Duty Board Config has "Auto-generate duty ledger" turned on.
+app.post('/api/jobs/generate-duty-ledger', async (req, res, next) => {
+  try {
+    if (!verifyCronSecret(req.header('X-Cron-Secret'))) {
+      throw new HttpError(401, 'UNAUTHORIZED', 'Invalid or missing cron secret');
+    }
+    const result = await runGenerateDutyLedgerJob();
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    next(err);
+  }
+});
+
 app.use('/api/employees', employeesRouter);
 app.use('/api/rotation', rotationRouter);
 app.use('/api/duty-ledger', dutyLedgerRouter);
@@ -74,6 +90,7 @@ app.use('/api/audit', auditRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/companies', companiesRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/admin', adminRouter);
 
 app.use(errorHandler);
 

@@ -8,6 +8,12 @@ const FLUSH_DELAY_MS = 30 * 1000;
 
 const resend = new Resend(config.RESEND_API_KEY || 'disabled');
 
+/** Admin-editable via Settings > Notifications ("From Email"); falls back to the env default. */
+async function resolveFromEmail(): Promise<string> {
+  const { data } = await supabaseAdmin.from('settings').select('value').eq('key', 'from_email').maybeSingle();
+  return data?.value || config.FROM_EMAIL;
+}
+
 interface QueueEmailParams {
   triggerEvent: string;
   entryId?: string;
@@ -54,7 +60,7 @@ export const emailService = {
 
         if (config.RESEND_API_KEY) {
           await resend.emails.send({
-            from: config.FROM_EMAIL,
+            from: await resolveFromEmail(),
             to: recipientEmails,
             subject: row.subject,
             html: row.body_html,
@@ -79,6 +85,22 @@ export const emailService = {
           })
           .eq('id', row.id);
       }
+    }
+  },
+
+  /** Sends immediately (no outbox) — used by the admin panel's "Send Test" button. */
+  async sendTestEmail(to: string): Promise<void> {
+    if (!config.RESEND_API_KEY) {
+      throw new Error('RESEND_API_KEY is not set — no email provider is configured, so a test email cannot be sent.');
+    }
+    const { error } = await resend.emails.send({
+      from: await resolveFromEmail(),
+      to: [to],
+      subject: 'EBC Workforce CRM — test email',
+      html: '<p>This is a test email from the EBC Workforce CRM admin panel. If you received this, outbound email is configured correctly.</p>',
+    });
+    if (error) {
+      throw new Error(error.message);
     }
   },
 };

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { supabaseAdmin } from '../config';
-import { verifyJWT, requireRole } from '../middleware/auth';
+import { verifyJWT, requireAnyRole } from '../middleware/auth';
 import { asyncHandler } from '../utils/asyncHandler';
 import { assertNoDbError } from '../utils/db';
 import { ok } from '../utils/respond';
@@ -15,7 +15,7 @@ const querySchema = z.object({
   action: z.string().optional(),
 });
 
-router.use(verifyJWT, requireRole('supervisor'));
+router.use(verifyJWT, requireAnyRole('supervisor', 'admin'));
 
 router.get(
   '/',
